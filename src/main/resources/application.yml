@@ -1,0 +1,20 @@
+spring:
+  application:
+    name: gymcore-api
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/gymcore}
+    username: ${DB_USERNAME:admin}
+    password: ${DB_PASSWORD:admin123}
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+
+server:
+  port: 8080
