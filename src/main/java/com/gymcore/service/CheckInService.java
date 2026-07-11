@@ -4,6 +4,7 @@ package com.gymcore.service;
 import com.gymcore.dto.CheckInRequest;
 import com.gymcore.dto.CheckInResponse;
 import com.gymcore.dto.OccupancyResponse;
+import com.gymcore.dto.HeatMapResponse;
 import com.gymcore.entity.CheckIn;
 import com.gymcore.entity.Location;
 import com.gymcore.entity.Member;
@@ -16,7 +17,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -90,6 +94,34 @@ public class CheckInService {
         return checkInRepository.findByMemberId(memberId)
                 .stream()
                 .map(this::toResponse)
+                .toList();
+    }
+
+    public List<HeatMapResponse> getHeatmap(Long locationId) {
+        LocalDateTime from = LocalDateTime.now().minusWeeks(8);
+        LocalDateTime to = LocalDateTime.now();
+
+        List<CheckIn> checkIns = checkInRepository
+                .findByLocationIdAndTimeRange(locationId, from, to);
+
+        Map<String, Long> counts = checkIns.stream()
+                .collect(Collectors.groupingBy(
+                        c -> c.getCheckInTime().getDayOfWeek().getValue()
+                                + "-" + c.getCheckInTime().getHour(),
+                        Collectors.counting()
+                ));
+
+        return counts.entrySet().stream()
+                .map(e -> {
+                    String[] parts = e.getKey().split("-");
+                    return new HeatMapResponse(
+                            Integer.parseInt(parts[0]),
+                            Integer.parseInt(parts[1]),
+                            e.getValue()
+                    );
+                })
+                .sorted(Comparator.comparingInt(HeatMapResponse::getDayOfWeek)
+                        .thenComparingInt(HeatMapResponse::getHour))
                 .toList();
     }
 }

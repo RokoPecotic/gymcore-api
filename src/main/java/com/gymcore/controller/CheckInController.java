@@ -38,4 +38,10 @@ public class CheckInController {
             @PathVariable Long memberId) {
         return ResponseEntity.ok(checkInService.getMemberHistory(memberId));
     }
+
+    @GetMapping("/heatmap/{locationId}")
+    public ResponseEntity<List<HeatMapResponse>> getHeatmap(
+            @PathVariable Long locationId) {
+        return ResponseEntity.ok(checkInService.getHeatmap(locationId));
+    }
 }
