@@ -27,8 +27,6 @@ public class Location {
 
     private String email;
 
-    private String phoneNumber;
-
     @Column(nullable = false)
     private String address;
 

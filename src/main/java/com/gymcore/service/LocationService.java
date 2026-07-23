@@ -36,7 +36,6 @@ public class LocationService {
         location.setCity(request.getCity());
         location.setTotalAreaM2(request.getTotalAreaM2());
         location.setCapacity(request.getCapacity());
-        location.setPhoneNumber(request.getPhoneNumber());
         location.setEmail(request.getEmail());
         location.setTenant(tenant);
 
@@ -53,7 +52,6 @@ public class LocationService {
                 location.getCity(),
                 location.getTotalAreaM2(),
                 location.getCapacity(),
-                location.getPhoneNumber(),
                 location.getEmail(),
                 location.getActive(),
                 location.getTenant().getId(),
@@ -85,7 +83,6 @@ public class LocationService {
         location.setCity(request.getCity());
         location.setTotalAreaM2(request.getTotalAreaM2());
         location.setCapacity(request.getCapacity());
-        location.setPhoneNumber(request.getPhoneNumber());
         location.setEmail(request.getEmail());
 
         return toResponse(locationRepository.save(location));

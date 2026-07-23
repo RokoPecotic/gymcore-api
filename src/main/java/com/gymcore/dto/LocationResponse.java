@@ -14,7 +14,6 @@ public class LocationResponse {
     private String city;
     private Integer totalAreaM2;
     private Integer capacity;
-    private String phoneNumber;
     private String email;
     private Boolean active;
     private Long tenantId;

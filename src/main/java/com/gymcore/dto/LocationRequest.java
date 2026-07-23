@@ -23,7 +23,6 @@ public class LocationRequest {
     @NotNull
     private Integer capacity;
 
-    private String phoneNumber;
 
     private String email;
 

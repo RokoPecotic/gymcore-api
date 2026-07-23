@@ -45,14 +45,14 @@ public class AnalyticsService {
     }
 
     private String getDayName(int dow) {
-        return switch(dow) {
+        return switch (dow) {
+            case 0 -> "SUNDAY";
             case 1 -> "MONDAY";
             case 2 -> "TUESDAY";
             case 3 -> "WEDNESDAY";
             case 4 -> "THURSDAY";
             case 5 -> "FRIDAY";
             case 6 -> "SATURDAY";
-            case 7 -> "SUNDAY";
             default -> "UNKNOWN";
         };
     }

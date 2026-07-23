@@ -35,10 +35,12 @@ public interface AnalyticsRepository extends JpaRepository<CheckIn, Long> {
     @Query("SELECT COUNT(m) FROM Member m WHERE m.location.tenant.id = :tenantId")
     Long countTotalMembers(@Param("tenantId") Long tenantId);
 
-    @Query(value = "SELECT COUNT(c.id) * 1.0 / l.capacity * 100 " +
-            "FROM check_ins c " +
-            "JOIN locations l ON l.id = c.location_id " +
-            "WHERE c.location_id = :locationId " +
+    @Query(value = "SELECT AVG(daily_count) / (l.capacity * 14.0) * 100 " +
+            "FROM (SELECT DATE(check_in_time) as day, COUNT(*) as daily_count " +
+            "      FROM check_ins WHERE location_id = :locationId " +
+            "      GROUP BY DATE(check_in_time)) daily " +
+            "CROSS JOIN locations l " +
+            "WHERE l.id = :locationId " +
             "GROUP BY l.capacity",
             nativeQuery = true)
     Double findAverageOccupancy(@Param("locationId") Long locationId);
