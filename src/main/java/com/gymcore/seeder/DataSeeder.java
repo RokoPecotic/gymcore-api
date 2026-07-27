@@ -1,5 +1,6 @@
 package com.gymcore.seeder;
 
+import org.aspectj.weaver.ast.Test;
 import org.springframework.beans.factory.annotation.Value;
 import com.github.javafaker.Faker;
 import com.gymcore.entity.*;
@@ -7,6 +8,7 @@ import com.gymcore.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,6 +18,7 @@ import java.time.ZoneId;
 import java.util.*;
 
 @Slf4j
+@Profile("!test")
 @Component
 @RequiredArgsConstructor
 public class DataSeeder implements CommandLineRunner {
