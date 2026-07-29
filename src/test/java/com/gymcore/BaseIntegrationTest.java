@@ -18,7 +18,8 @@ public abstract class BaseIntegrationTest {
             new PostgreSQLContainer<>("postgres:16")
                     .withDatabaseName("gymcore_test")
                     .withUsername("test")
-                    .withPassword("test");
+                    .withPassword("test")
+                    .withReuse(true);
 
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
