@@ -6,6 +6,7 @@ import com.gymcore.dto.RegisterRequest;
 import com.gymcore.entity.Role;
 import com.gymcore.entity.SubscriptionPlan;
 import com.gymcore.entity.Tenant;
+import com.gymcore.repository.CheckInRepository;
 import com.gymcore.repository.LocationRepository;
 import com.gymcore.repository.TenantRepository;
 import com.gymcore.repository.UserRepository;
@@ -23,6 +24,9 @@ import org.springframework.http.ResponseEntity;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TenantIsolationIntegrationTest extends BaseIntegrationTest {
+
+    @Autowired
+    private CheckInRepository checkInRepository;
 
     @Autowired
     private TestRestTemplate restTemplate;
@@ -60,6 +64,7 @@ class TenantIsolationIntegrationTest extends BaseIntegrationTest {
 
     @AfterEach
     void tearDown() {
+        checkInRepository.deleteAll();
         locationRepository.deleteAll();
         userRepository.deleteAll();
         tenantRepository.deleteAll();
