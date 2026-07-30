@@ -271,7 +271,7 @@ public class DataSeeder implements CommandLineRunner {
         LocalDateTime now = LocalDateTime.now();
 
         int[] peakHours = {7, 8, 9, 17, 18, 19, 20};
-        int[] offPeakHours = {10, 11, 12, 13, 14, 15, 16};
+        int[] offPeakHours = {0, 1, 2, 3, 4, 5, 6, 10, 11, 12, 13, 14, 15, 16, 21, 22, 23};
 
         for (Member member : members) {
             int visits = random.nextInt(40) + 40;

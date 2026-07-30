@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>GymCore Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+    <style>
+        body { font-family: system-ui, sans-serif; background: #0f1117; color: #e2e8f0; margin: 0; padding: 24px; }
+        h1 { color: #f8fafc; }
+        .card { background: #1e293b; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+        input, button, select { padding: 10px; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: #e2e8f0; margin-right: 8px; }
+        button { background: #3b82f6; cursor: pointer; border: none; font-weight: 600; }
+        button:hover { background: #2563eb; }
+        .stat { display: inline-block; background: #0f172a; padding: 16px 24px; border-radius: 8px; margin-right: 12px; }
+        .stat-value { font-size: 28px; font-weight: 700; color: #5eead4; }
+        .stat-label { font-size: 12px; color: #94a3b8; text-transform: uppercase; }
+        canvas { max-height: 300px; }
+        #error { color: #fca5a5; margin-top: 10px; }
+        .actions { margin-top: 16px; padding-top: 16px; border-top: 1px solid #334155; }
+    </style>
+</head>
+<body>
+
+<h1>💪 GymCore Dashboard</h1>
+
+<div class="card">
+    <h3>Login</h3>
+    <input type="email" id="email" placeholder="Email" value="dawn.block@gmail.com">
+    <input type="password" id="password" placeholder="Password" value="password123">
+    <button onclick="login()">Login</button>
+    <div id="error"></div>
+</div>
+
+<div class="card">
+    <h3>Location</h3>
+    <input type="number" id="locationId" placeholder="Location ID" value="1">
+    <button onclick="loadDashboard()">Load Data</button>
+</div>
+
+<div class="card" id="occupancyCard" style="display:none">
+    <h3>Occupancy</h3>
+    <div class="stat">
+        <div class="stat-value" id="currentOcc">-</div>
+        <div class="stat-label">Current</div>
+    </div>
+    <div class="stat">
+        <div class="stat-value" id="capacityVal">-</div>
+        <div class="stat-label">Capacity</div>
+    </div>
+    <div class="stat">
+        <div class="stat-value" id="percentVal">-</div>
+        <div class="stat-label">Percentage</div>
+    </div>
+
+    <div class="actions">
+        <input type="number" id="memberId" placeholder="Member ID" value="1">
+        <button onclick="doCheckIn()">Check In</button>
+        <button onclick="doCheckOut()">Check Out</button>
+    </div>
+</div>
+
+<div class="card" id="heatmapCard" style="display:none">
+    <h3>Heatmap — Check-ins by Hour</h3>
+    <canvas id="heatmapChart"></canvas>
+</div>
+
+<div class="card" id="franchiseCard" style="display:none">
+    <h3>Franchise — Locations Comparison</h3>
+    <canvas id="franchiseChart"></canvas>
+</div>
+
+<script>
+    const API = 'http://localhost:8080';
+    let token = null;
+    let heatmapChartInstance = null;
+    let franchiseChartInstance = null;
+
+    async function login() {
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const errorDiv = document.getElementById('error');
+        errorDiv.textContent = '';
+
+        try {
+            const res = await fetch(`${API}/api/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+            if (!res.ok) throw new Error('Login failed');
+            const data = await res.json();
+            token = data.token;
+            errorDiv.textContent = '✅ Logged in!';
+            errorDiv.style.color = '#86efac';
+        } catch (e) {
+            errorDiv.textContent = '❌ ' + e.message;
+            errorDiv.style.color = '#fca5a5';
+        }
+    }
+
+    async function loadDashboard() {
+        if (!token) { alert('Login first!'); return; }
+        const locationId = document.getElementById('locationId').value;
+
+        await loadOccupancy(locationId);
+        await loadHeatmap(locationId);
+        await loadFranchise();
+    }
+
+    async function loadOccupancy(locationId) {
+        const res = await fetch(`${API}/api/checkins/occupancy/${locationId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        document.getElementById('occupancyCard').style.display = 'block';
+        document.getElementById('currentOcc').textContent = data.currentOccupancy;
+        document.getElementById('capacityVal').textContent = data.capacity;
+        document.getElementById('percentVal').textContent = data.occupancyPercentage + '%';
+    }
+
+    async function loadHeatmap(locationId) {
+        const res = await fetch(`${API}/api/checkins/heatmap/${locationId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        const hourCounts = new Array(24).fill(0);
+        data.forEach(d => { hourCounts[d.hour] += d.checkInCount; });
+
+        document.getElementById('heatmapCard').style.display = 'block';
+        const ctx = document.getElementById('heatmapChart');
+
+        if (heatmapChartInstance) heatmapChartInstance.destroy();
+        heatmapChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: hourCounts.map((_, i) => i + 'h'),
+                datasets: [{
+                    label: 'Check-ins',
+                    data: hourCounts,
+                    backgroundColor: '#3b82f6'
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } },
+                    x: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }
+                },
+                plugins: { legend: { labels: { color: '#e2e8f0' } } }
+            }
+        });
+    }
+
+    async function loadFranchise() {
+        const res = await fetch(`${API}/api/analytics/franchise/1`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        document.getElementById('franchiseCard').style.display = 'block';
+        const ctx = document.getElementById('franchiseChart');
+
+        if (franchiseChartInstance) franchiseChartInstance.destroy();
+        franchiseChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: data.locations.map(l => l.locationName),
+                datasets: [{
+                    label: 'Total Visits',
+                    data: data.locations.map(l => l.totalVisits),
+                    backgroundColor: '#5eead4'
+                }]
+            },
+            options: {
+                responsive: true,
+                indexAxis: 'y',
+                scales: {
+                    y: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } },
+                    x: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }
+                },
+                plugins: { legend: { labels: { color: '#e2e8f0' } } }
+            }
+        });
+    }
+
+    async function doCheckIn() {
+        const memberId = document.getElementById('memberId').value;
+        const locationId = document.getElementById('locationId').value;
+
+        const res = await fetch(`${API}/api/checkins`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ memberId: parseInt(memberId), locationId: parseInt(locationId) })
+        });
+
+        if (res.ok) {
+            alert('Checked in!');
+            loadOccupancy(locationId);
+        } else {
+            alert('Check-in failed: ' + res.status);
+        }
+    }
+
+    async function doCheckOut() {
+        const memberId = document.getElementById('memberId').value;
+        const locationId = document.getElementById('locationId').value;
+
+        const res = await fetch(`${API}/api/checkins/checkout/${memberId}`, {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (res.ok) {
+            alert('Checked out!');
+            loadOccupancy(locationId);
+        } else {
+            alert('Check-out failed: ' + res.status);
+        }
+    }
+</script>
+
+</body>
+</html>
